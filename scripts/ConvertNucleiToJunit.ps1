@@ -31,20 +31,19 @@ foreach ($line in $scanOutput) {
     $severity = $parts[2]
     $message = $parts[2..($parts.Length - 1)] -join " "
 
-    Write-Host "Severity " $severity
-
     # Create <testsuite> element
     $testSuiteElement = $xmlDoc.CreateElement("testsuite")
     $testSuiteElement.SetAttribute("name", $testSuiteName)
     $testSuiteElement.SetAttribute("time", "0")
 
-    # Create <testcase> element
-    $testCaseElement = $xmlDoc.CreateElement("testcase")
-    $testCaseElement.SetAttribute("name", $testSuiteName)
-    $testCaseElement.SetAttribute("time", "0")
-
     if ($severity -ne "info")
     {
+
+        # Create <testcase> element
+        $testCaseElement = $xmlDoc.CreateElement("testcase")
+        $testCaseElement.SetAttribute("name", $testSuiteName)
+        $testCaseElement.SetAttribute("time", "0")
+
         # Create <failure> element
         $failureElement = $xmlDoc.CreateElement("failure")
         $failureElement.SetAttribute("type", $failureType)
@@ -52,20 +51,12 @@ foreach ($line in $scanOutput) {
 
         # Append failure element to the hierarchy
         $testCaseElement.AppendChild($failureElement)
+
+        # Append elements to the hierarchy
+        $testSuiteElement.AppendChild($testCaseElement)
+        $xmlRoot.AppendChild($testSuiteElement)
+
     }
-    else{
-        # Create <system-out> element
-        $infoElement = $xmlDoc.CreateElement("system-out")
-        $infoElement.InnerText = $message
-
-        # Append failure element to the hierarchy
-        $testCaseElement.AppendChild($infoElement)
-    }
-
-    # Append elements to the hierarchy
-    $testSuiteElement.AppendChild($testCaseElement)
-    $xmlRoot.AppendChild($testSuiteElement)
-
 
 
 }
