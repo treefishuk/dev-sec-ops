@@ -8,9 +8,6 @@
     $PathOfOutputFile
 )
 
-Write-Host $PathOfInputFile
-Write-Host $PathOfOutputFile
-
 $scanOutput = Get-Content -Path $PathOfInputFile
 
 # Split the scan output into individual lines
@@ -31,7 +28,10 @@ foreach ($line in $scanOutput) {
     $parts = $cleanedLine -split " "
     $testSuiteName = $parts[0]
     $failureType = $parts[1]
-    $failureMessage = $parts[2..($parts.Length - 1)] -join " "
+    $severity = $parts[2]
+    $message = $parts[2..($parts.Length - 1)] -join " "
+
+    Write-Host "Severity " $severity
 
     # Create <testsuite> element
     $testSuiteElement = $xmlDoc.CreateElement("testsuite")
@@ -43,15 +43,31 @@ foreach ($line in $scanOutput) {
     $testCaseElement.SetAttribute("name", $testSuiteName)
     $testCaseElement.SetAttribute("time", "0")
 
-    # Create <failure> element
-    $failureElement = $xmlDoc.CreateElement("failure")
-    $failureElement.SetAttribute("type", $failureType)
-    $failureElement.SetAttribute("message", $failureMessage)
+    if ($severity -ne "info")
+    {
+        # Create <failure> element
+        $failureElement = $xmlDoc.CreateElement("failure")
+        $failureElement.SetAttribute("type", $failureType)
+        $failureElement.SetAttribute("message", $message)
+
+        # Append failure element to the hierarchy
+        $testCaseElement.AppendChild($failureElement)
+    }
+    else{
+        # Create <system-out> element
+        $infoElement = $xmlDoc.CreateElement("system-out")
+        $infoElement.InnerText = $message
+
+        # Append failure element to the hierarchy
+        $testCaseElement.AppendChild($infoElement)
+    }
 
     # Append elements to the hierarchy
-    $testCaseElement.AppendChild($failureElement)
     $testSuiteElement.AppendChild($testCaseElement)
     $xmlRoot.AppendChild($testSuiteElement)
+
+
+
 }
 
 # Save the XML to a file
