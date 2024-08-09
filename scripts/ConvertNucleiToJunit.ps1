@@ -55,4 +55,4 @@ foreach ($line in $scanOutput) {
 }
 
 # Save the XML to a file
-$xmlDoc.Save("nuclei_scan_results.xml")
+$xmlDoc.Save($PathOfOutputFile)
